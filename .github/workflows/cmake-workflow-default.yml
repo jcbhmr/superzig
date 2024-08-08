@@ -1,0 +1,43 @@
+name: cmake --workflow --preset default
+on:
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - .github/**
+      - LICENSE
+      - README.md
+      - "!.github/workflows/cmake-workflow-default.yml"
+  pull_request:
+    paths-ignore:
+      - .github/**
+      - LICENSE
+      - README.md
+      - "!.github/workflows/cmake-workflow-default.yml"
+  workflow_call:
+concurrency:
+  # When run via `workflow_call` the `github.workflow` and `github.ref` are the
+  # same as the parent so we need a differentiation suffix.
+  group: ${{ github.workflow }}-${{ github.ref }}-cmake-workflow-default
+  cancel-in-progress: true
+jobs:
+  cmake-workflow-default:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jwlawson/actions-setup-cmake@v2
+      - run: |
+          cd ~
+          mkdir -p cosmocc
+          cd cosmocc
+          wget https://cosmo.zip/pub/cosmocc/cosmocc.zip
+          unzip cosmocc.zip
+          echo "$HOME/cosmocc/bin" >> "$GITHUB_PATH"
+          sudo wget -O /usr/bin/ape https://cosmo.zip/pub/cosmos/bin/ape-$(uname -m).elf
+          sudo chmod +x /usr/bin/ape
+          sudo sh -c "echo ':APE:M::MZqFpD::/usr/bin/ape:' >/proc/sys/fs/binfmt_misc/register"
+          sudo sh -c "echo ':APE-jart:M::jartsr::/usr/bin/ape:' >/proc/sys/fs/binfmt_misc/register"
+      - run: cmake --workflow --preset default
+      - uses: actions/upload-artifact@v4
+        with:
+          name: superzig
+          path: build/zig
