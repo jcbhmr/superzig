@@ -26,6 +26,13 @@ FetchContent_MakeAvailable(GSL)
 # Binary targets
 add_executable(zig)
 add_executable(superzig::zig ALIAS zig)
+set_property(TARGET zig PROPERTY OUTPUT_NAME zig.exe)
+add_custom_command(
+  TARGET zig
+  POST_BUILD
+  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/zig"
+  COMMAND "${CMAKE_COMMAND}" -E create_symlink "$<TARGET_FILE:zig>"
+          "${CMAKE_CURRENT_BINARY_DIR}/zig")
 target_sources(zig PRIVATE src/zig.cpp)
 target_compile_features(zig PRIVATE cxx_std_23)
 # cosmocc has exceptions off by default
