@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -ex
+
+# zipmerge out.zip in1.zip in2.zip in3.zip
+
+out=$1
+shift
+in=("$@")
+tmp=$(mktemp -d)
+trap 'rm -rf $tmp' EXIT
+
+for i in "${in[@]}"; do
+    unzip -q "$i" -d "$tmp"
+done
+
+out2=$(realpath "$out")
+cd "$tmp"
+zip -Arq "$out2" .

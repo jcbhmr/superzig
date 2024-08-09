@@ -6,39 +6,53 @@ project(
   VERSION 0.13.0
   LANGUAGES CXX)
 
+# include(FetchContent)
+# FetchContent_Declare(
+#   platformdirs
+#   GIT_REPOSITORY https://github.com/jcbhmr/platformdirs-cpp.git
+#   GIT_TAG eed745adb4e7000da0e6032374890e7353c9a184
+#   FIND_PACKAGE_ARGS 0.1.0...<1)
+# # Will try find_package(platformdirs 0.1.0...<1) first
+# FetchContent_MakeAvailable(platformdirs)
+
 include(FetchContent)
 FetchContent_Declare(
-  platformdirs
-  GIT_REPOSITORY https://github.com/jcbhmr/platformdirs-cpp.git
-  GIT_TAG eed745adb4e7000da0e6032374890e7353c9a184
-  FIND_PACKAGE_ARGS 0.1.0...<1)
-# Will try find_package(platformdirs 0.1.0...<1) first
-FetchContent_MakeAvailable(platformdirs)
+  GSL
+  GIT_REPOSITORY https://github.com/microsoft/GSL.git
+  GIT_TAG v4.0.0
+  FIND_PACKAGE_ARGS 4.0.0)
+FetchContent_MakeAvailable(GSL)
 
 # Binary targets
 add_executable(zig)
 add_executable(superzig::zig ALIAS zig)
-set_property(TARGET zig PROPERTY OUTPUT_NAME platformdirs)
 target_sources(zig PRIVATE src/zig.cpp)
 target_compile_features(zig PRIVATE cxx_std_23)
 # cosmocc has exceptions off by default
 target_compile_options(zig PRIVATE -fexceptions)
-target_link_libraries(zig PRIVATE platformdirs)
+# target_link_libraries(zig PRIVATE platformdirs)
+target_link_libraries(zig PRIVATE Microsoft.GSL::GSL)
 target_compile_definitions(
   zig
-  PRIVATE PROJECT_VERSION="${PROJECT_VERSION}"
+  PRIVATE PROJECT_NAME="${PROJECT_NAME}"
+          PROJECT_VERSION="${PROJECT_VERSION}"
           PROJECT_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
           PROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR}
           PROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH}
           PROJECT_VERSION_TWEAK=${PROJECT_VERSION_TWEAK})
-find_program(zig_command NAMES zip REQUIRED)
 add_custom_command(
   TARGET zig
   POST_BUILD
   COMMAND
-    "${zip_command}" -Ar "$<TARGET_FILE:zig>" zig-common zig-freebsd-x86_64
-    zig-linux-aarch64 zig-linux-x86_64 zig-macos-aarch64 zig-macos-x86_64
-    zig-windows-aarch64 zig-windows-x86_64)
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/zipmerge"  "$<TARGET_FILE:zig>"
+  "${CMAKE_CURRENT_SOURCE_DIR}/zig-common.zip"
+  "${CMAKE_CURRENT_SOURCE_DIR}/zig-freebsd-x86_64.zip"
+  "${CMAKE_CURRENT_SOURCE_DIR}/zig-linux-aarch64.zip"
+  "${CMAKE_CURRENT_SOURCE_DIR}/zig-linux-x86_64.zip"
+  "${CMAKE_CURRENT_SOURCE_DIR}/zig-macos-aarch64.zip"
+  "${CMAKE_CURRENT_SOURCE_DIR}/zig-macos-x86_64.zip"
+  "${CMAKE_CURRENT_SOURCE_DIR}/zig-windows-aarch64.zip"
+  "${CMAKE_CURRENT_SOURCE_DIR}/zig-windows-x86_64.zip" )
 
 # Testing
 include(CTest)
